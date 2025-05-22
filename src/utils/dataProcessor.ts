@@ -82,7 +82,7 @@ export const calculateMetrics = (data: any[]) => {
   const openStatuses = [
     'new',
     'in progress',
-    'on hold',
+    'hold',
     'in review',
     'awaiting info',
     'pending'
