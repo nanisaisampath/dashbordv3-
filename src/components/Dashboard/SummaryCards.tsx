@@ -7,61 +7,61 @@ import { calculateMetrics } from "@/utils/dataProcessor"
 import { Badge } from "@/components/ui/badge"
 import { Ticket, CheckCircle, AlertCircle, Filter } from "lucide-react"
 
-
-
-
 const SummaryCards = () => {
-  const { filteredData, isLoading, filters } = useDashboard()
+  const { filteredData, isLoading, filters, selectTicketsByCategory } = useDashboard()
 
   const metrics = React.useMemo(() => {
-  if (!filteredData) return {
-    totalTickets: 0,
-    openTickets: 0,
-    resolvedTickets: 0,
-  };
+    if (!filteredData)
+      return {
+        totalTickets: 0,
+        openTickets: 0,
+        resolvedTickets: 0,
+      }
+    return calculateMetrics(filteredData)
+  }, [filteredData])
 
-  const baseMetrics = calculateMetrics(filteredData);
+  const handleOpenTicketsClick = () => {
+    selectTicketsByCategory("status", "Open")
+  }
 
-  // Compute open tickets count from filteredData directly
+  const handleResolvedTicketsClick = () => {
+    selectTicketsByCategory("status", "Closed")
+  }
 
-  return {
-    ...baseMetrics,
-  };
-}, [filteredData]);
-
-  // Get active filters to display as badges
+  // MODIFIED: getActiveFilters to always show all filter categories,
+  // indicating "All" if no specific filter is applied.
   const getActiveFilters = () => {
     const activeFilters = []
 
-    if (filters.technology && filters.technology !== "All") {
-      activeFilters.push({ label: "Technology", value: filters.technology })
-    } else if (filters.technology === "All") {
-      activeFilters.push({ label: "Technology", value: "All" })
-    }
+    // Technology Filter
+    activeFilters.push({
+      label: "Technology",
+      value: filters.technology && filters.technology !== "All" ? filters.technology : "All"
+    })
 
-    if (filters.client && filters.client !== "All") {
-      activeFilters.push({ label: "Client", value: filters.client })
-    } else if (filters.client === "All") {
-      activeFilters.push({ label: "Client", value: "All" })
-    }
+    // Client Filter
+    activeFilters.push({
+      label: "Client",
+      value: filters.client && filters.client !== "All" ? filters.client : "All"
+    })
 
-    if (filters.ticketType && filters.ticketType !== "All") {
-      activeFilters.push({ label: "Ticket Type", value: filters.ticketType })
-    } else if (filters.ticketType === "All") {
-      activeFilters.push({ label: "Ticket Type", value: "All" })
-    }
+    // Ticket Type Filter
+    activeFilters.push({
+      label: "Ticket Type",
+      value: filters.ticketType && filters.ticketType !== "All" ? filters.ticketType : "All"
+    })
 
-    if (filters.status && filters.status !== "All") {
-      activeFilters.push({ label: "Status", value: filters.status })
-    } else if (filters.status === "All") {
-      activeFilters.push({ label: "Status", value: "All" })
-    }
+    // Status Filter
+    activeFilters.push({
+      label: "Status",
+      value: filters.status && filters.status !== "All" ? filters.status : "All"
+    })
 
-    if (filters.assignedTo && filters.assignedTo !== "All") {
-      activeFilters.push({ label: "Assigned To", value: filters.assignedTo })
-    } else if (filters.assignedTo === "All") {
-      activeFilters.push({ label: "Assigned To", value: "All" })
-    }
+    // Assigned To Filter
+    activeFilters.push({
+      label: "Assigned To",
+      value: filters.assignedTo && filters.assignedTo !== "All" ? filters.assignedTo : "All"
+    })
 
     return activeFilters
   }
@@ -77,6 +77,7 @@ const SummaryCards = () => {
         </div>
         <Badge variant="outline" className="px-3 py-1.5 gap-1.5 self-start">
           <Filter className="h-3.5 w-3.5" />
+          {/* The count will now always be the number of filter categories (e.g., 5) */}
           <span>{activeFilters.length} active filters</span>
         </Badge>
       </div>
@@ -90,59 +91,64 @@ const SummaryCards = () => {
           iconColor="text-violet-500 dark:text-violet-400"
         />
 
-        <MetricCard
-          title="Open Tickets"
-          value={isLoading ? "..." : metrics.openTickets || 0}
-          icon={<AlertCircle className="h-5 w-5" />}
-          color="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30"
-          iconColor="text-amber-500 dark:text-amber-400"
-        />
+        <div onClick={handleOpenTicketsClick} className="cursor-pointer">
+          <MetricCard
+            title="Open Tickets"
+            value={isLoading ? "..." : metrics.openTickets || 0}
+            icon={<AlertCircle className="h-5 w-5" />}
+            color="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30"
+            iconColor="text-amber-500 dark:text-amber-400"
+          />
+        </div>
 
-        <MetricCard
-          title="Resolved Tickets"
-          value={isLoading ? "..." : metrics.resolvedTickets || 0}
-          icon={<CheckCircle className="h-5 w-5" />}
-          color="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/30"
-          iconColor="text-emerald-500 dark:text-emerald-400"
-        />
+        <div onClick={handleResolvedTicketsClick} className="cursor-pointer">
+          <MetricCard
+            title="Resolved Tickets"
+            value={isLoading ? "..." : metrics.resolvedTickets || 0}
+            icon={<CheckCircle className="h-5 w-5" />}
+            color="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/30"
+            iconColor="text-emerald-500 dark:text-emerald-400"
+          />
+        </div>
       </div>
 
-      {activeFilters.length > 0 && (
-        <Card className="overflow-hidden border-none shadow-md bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
-          <CardContent className="p-0">
-            <div className="p-4 border-b border-border/50 bg-muted/30 dark:bg-muted/10">
-              <h3 className="text-sm font-medium flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                Active Filters
-              </h3>
-            </div>
-            <div className="p-4 flex flex-wrap gap-3">
-              {activeFilters.map((filter, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col px-4 py-2 rounded-lg border border-border/50 bg-background dark:bg-gray-800 hover:shadow-sm transition-all"
-                >
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground">{filter.label}</span>
-                  <span className="text-sm font-semibold">{filter.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* MODIFIED: Removed the activeFilters.length > 0 condition */}
+      <Card className="overflow-hidden border-none shadow-md bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+        <CardContent className="p-0">
+          <div className="p-4 border-b border-border/50 bg-muted/30 dark:bg-muted/10">
+            <h3 className="text-sm font-medium flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              Active Filters
+            </h3>
+          </div>
+          <div className="p-4 flex flex-wrap gap-3">
+            {activeFilters.map((filter, index) => (
+              <div
+                key={index}
+                className="flex flex-col px-4 py-2 rounded-lg border border-border/50 bg-background dark:bg-gray-800 hover:shadow-sm transition-all"
+              >
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">{filter.label}</span>
+                <span className="text-sm font-semibold">{filter.value}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
 const MetricCard = ({ title, value, icon, color, iconColor }) => (
-  <Card className={`border-none shadow-md hover:shadow-lg transition-all overflow-hidden ${color}`}>
+  <Card className={`border-none shadow-md hover:scale-[1.02] transition-transform duration-200 ease-in-out overflow-hidden ${color}`}>
     <CardContent className="p-6">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           <p className="text-3xl font-bold">{value}</p>
         </div>
-        <div className={`p-2.5 rounded-full bg-background/80 dark:bg-gray-800/80 ${iconColor}`}>{icon}</div>
+        <div className={`p-2.5 rounded-full bg-background/80 dark:bg-gray-800/80 ${iconColor}`}>
+          {icon}
+        </div>
       </div>
     </CardContent>
   </Card>
